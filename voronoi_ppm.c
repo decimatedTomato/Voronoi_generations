@@ -98,9 +98,9 @@ void fill_circle(int cx, int cy, int r, Color32 color) {
     int y0 = cy - r;
     int x1 = cx + r;
     int y1 = cy + r;
-    for (size_t x = x0; x < x1; x++) {
+    for (int x = x0; x < x1; x++) {
         if(x < 0 || x >= WIDTH) continue;
-        for (size_t y = y0; y < y1; y++) {
+        for (int y = y0; y < y1; y++) {
             if(y < 0 || y >= HEIGHT) continue;
             if(sqrt_dist(cx, x, cy, y) <= r*r) {
                 image[y][x] = color;
@@ -113,10 +113,6 @@ void render_seeds(Color32 seed_color) {
     for(size_t i = 0; i < SEED_COUNT; i++) {
         fill_circle(seeds[i].x, seeds[i].y, SEED_RADIUS, seed_color);
     }
-}
-
-void fill_line(int x0, int x1, int y0, int y1, int stroke, Color32 color) {
-    //
 }
 
 void render_voronoi() {

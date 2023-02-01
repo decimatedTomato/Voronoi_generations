@@ -11,7 +11,7 @@
 #define SEED_RADIUS 5
 #define NEAREST_SEED_COUNT 2
 
-#define OUTPUT_FILE_PATH "output.ppm"
+#define OUTPUT_FILE_PATH "output2.ppm"
 
 #define COLOR_RED 0xFF0000FF
 #define COLOR_GREEN 0xFF00FF00
@@ -99,9 +99,9 @@ void fill_circle(int cx, int cy, int r, Color32 color) {
     int y0 = cy - r;
     int x1 = cx + r;
     int y1 = cy + r;
-    for (size_t x = x0; x < x1; x++) {
+    for (int x = x0; x < x1; x++) {
         if(x < 0 || x >= WIDTH) continue;
-        for (size_t y = y0; y < y1; y++) {
+        for (int y = y0; y < y1; y++) {
             if(y < 0 || y >= HEIGHT) continue;
             if(sqrt_dist(cx, x, cy, y) <= r*r) {
                 image[y][x] = color;
@@ -116,16 +116,50 @@ void render_seeds(Color32 seed_color) {
     }
 }
 
-void render_voronoi() {
+typedef struct Neighbor {
+    int pixel_distance;
+    int seed_index;
+} Neighbor;
+
+Color32 average_color(Neighbor* neighbors, size_t color_count) {
+    unsigned int r = 0, g = 0, b = 0;
+    for(size_t c = 0; c < color_count; c++) {
+        r += (palette[neighbors[c].seed_index % PALETTE_COUNT] & 0x0000FF) >> 0;
+        g += (palette[neighbors[c].seed_index % PALETTE_COUNT] & 0x00FF00) >> 8;
+        b += (palette[neighbors[c].seed_index % PALETTE_COUNT] & 0xFF0000) >> 16;
+    }
+    r /= color_count;
+    g /= color_count;
+    b /= color_count;
+    return (b << 16) + (g << 8) + (r << 0);
+}
+
+void sort_lowest_distance_neighbors(Neighbor* neighbors, size_t neighbor_count) {
+    int min_distance_index;
+    for (size_t i = 0; i < neighbor_count - 1; i++) {
+        min_distance_index = i;
+        for (size_t j = i+1; j < neighbor_count; j++)
+            if (neighbors[j].pixel_distance < neighbors[min_distance_index].pixel_distance)
+                min_distance_index = j;
+        Neighbor temp = neighbors[i];
+        neighbors[i] = neighbors[min_distance_index];
+        neighbors[min_distance_index] = temp;
+    }
+}
+
+void render_voronoi(int nearest_count) {
+    nearest_count = (nearest_count < SEED_COUNT) ? nearest_count : SEED_COUNT; 
+    nearest_count = (nearest_count > 1) ? nearest_count : 1; 
+    Neighbor nearest[SEED_COUNT]; // I will sort the neighbors and average the top 'x' colors for each pixel
+
     for(int y = 0; y < HEIGHT; y++) {
         for(int x = 0; x < WIDTH; x++) {
-            int j = 0; // index of closest seed to point
-            for(size_t i = 1; i < SEED_COUNT; i++) {
-                if(sqrt_dist(seeds[i].x, x, seeds[i].y, y) < sqrt_dist(seeds[j].x, x, seeds[j].y, y)) {
-                    j = i;
-                }
+            for(size_t i = 0; i < SEED_COUNT; i++) {
+                Neighbor n = { .pixel_distance=sqrt_dist(seeds[i].x, x, seeds[i].y, y), .seed_index=i};
+                nearest[i] = n;
             }
-            image[y][x] = palette[j % PALETTE_COUNT];
+            sort_lowest_distance_neighbors(nearest, SEED_COUNT);
+            image[y][x] = average_color(nearest, nearest_count);
         }
     }
 }
@@ -134,7 +168,7 @@ int main() {
     srand(time(0));
     generate_random_seeds();
     fill_image(BACKGROUND_COLOR);
-    render_voronoi();
+    render_voronoi(2);
     render_seeds(COLOR_BLACK);
     save_image_as_ppm(OUTPUT_FILE_PATH);
 

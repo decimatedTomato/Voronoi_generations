@@ -6,5 +6,8 @@
         "glad.h": "c",
         "stdlib.h": "c",
         "stdint.h": "c"
-    }
+    },
+    "ppm-pgm-viewer-for-vscode.imagepreview.hidePanel": true,
+    "ppm-pgm-viewer-for-vscode.imagepreview.uiPosition": "right",
+    "ppm-pgm-viewer-for-vscode.imagepreview.autoScalingMode": false
 }
