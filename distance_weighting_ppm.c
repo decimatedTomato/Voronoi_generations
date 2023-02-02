@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <time.h>
 
+#include <math.h>
+
 #define WIDTH 800
 #define HEIGHT 400
 #define SEED_COUNT 90
@@ -118,15 +120,21 @@ typedef struct Neighbor {
     int seed_index;
 } Neighbor;
 
-//TODO this is not going to work
 Color32 average_weighted_color(Neighbor* seed_infos, size_t color_count) {
     double r = 0, g = 0, b = 0;
+    double total_distance = 0;
     for(size_t c = 0; c < color_count; c++) {
-        r += ((palette[seed_infos[c].seed_index % PALETTE_COUNT] & 0x0000FF) >> 0) / seed_infos[c].pixel_distance;
-        g += ((palette[seed_infos[c].seed_index % PALETTE_COUNT] & 0x00FF00) >> 8) / seed_infos[c].pixel_distance;
-        b += ((palette[seed_infos[c].seed_index % PALETTE_COUNT] & 0xFF0000) >> 16) / seed_infos[c].pixel_distance;
+        total_distance += seed_infos[c].pixel_distance;
     }
-    return ((unsigned int)b << 16) + ((unsigned int)g << 8) + ((unsigned int)r << 0);
+    for(size_t c = 0; c < color_count; c++) {
+        r += ((palette[seed_infos[c].seed_index % PALETTE_COUNT] & 0x0000FF) >> 0)  * (seed_infos[c].pixel_distance / total_distance);
+        g += ((palette[seed_infos[c].seed_index % PALETTE_COUNT] & 0x00FF00) >> 8) * (seed_infos[c].pixel_distance / total_distance);
+        b += ((palette[seed_infos[c].seed_index % PALETTE_COUNT] & 0xFF0000) >> 16) * (seed_infos[c].pixel_distance / total_distance);
+    }
+    unsigned int R = (r > 255) ? 255 : (unsigned int) r;
+    unsigned int G = (g > 255) ? 255 : (unsigned int) g;
+    unsigned int B = (b > 255) ? 255 : (unsigned int) b;
+    return (B << 16) + (G << 8) + (R << 0);
 }
 
 void render_voronoi() {
