@@ -7,9 +7,9 @@
 
 #define WIDTH 800
 #define HEIGHT 400
-#define SEED_COUNT 10
+#define SEED_COUNT 90
 #define SEED_RADIUS 5
-#define NEAREST_SEED_COUNT 2
+#define NEAREST_SEED_COUNT 3
 
 #define OUTPUT_FILE_PATH "output2.ppm"
 
@@ -147,8 +147,8 @@ void sort_lowest_distance_neighbors(Neighbor* neighbors, size_t neighbor_count) 
     }
 }
 
-void render_voronoi(int nearest_count) {
-    nearest_count = (nearest_count < SEED_COUNT) ? nearest_count : SEED_COUNT; 
+void render_voronoi() {
+    int nearest_count = (NEAREST_SEED_COUNT < SEED_COUNT) ? NEAREST_SEED_COUNT : SEED_COUNT; 
     nearest_count = (nearest_count > 1) ? nearest_count : 1; 
     Neighbor nearest[SEED_COUNT]; // I will sort the neighbors and average the top 'x' colors for each pixel
 
@@ -168,8 +168,8 @@ int main() {
     srand(time(0));
     generate_random_seeds();
     fill_image(BACKGROUND_COLOR);
-    render_voronoi(2);
-    render_seeds(COLOR_BLACK);
+    render_voronoi();
+    // render_seeds(COLOR_BLACK);
     save_image_as_ppm(OUTPUT_FILE_PATH);
 
     return 0;
