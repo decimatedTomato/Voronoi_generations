@@ -11,7 +11,7 @@
 #define SEED_RADIUS 5
 #define NEAREST_SEED_COUNT 3
 
-#define OUTPUT_FILE_PATH "output2.ppm"
+#define OUTPUT_FILE_PATH "output/output2.ppm"
 
 #define COLOR_RED 0xFF0000FF
 #define COLOR_GREEN 0xFF00FF00

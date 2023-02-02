@@ -10,7 +10,7 @@
 #define SEED_COUNT 90
 #define SEED_RADIUS 5
 
-#define OUTPUT_FILE_PATH "output3.ppm"
+#define OUTPUT_FILE_PATH "output/output3.ppm"
 
 #define COLOR_RED 0xFF0000FF
 #define COLOR_GREEN 0xFF00FF00
