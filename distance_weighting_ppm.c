@@ -9,7 +9,7 @@
 
 #define WIDTH 800
 #define HEIGHT 400
-#define SEED_COUNT 2
+#define SEED_COUNT 7
 #define SEED_RADIUS 5
 
 #define OUTPUT_FILE_PATH "output/output3.ppm"
@@ -40,22 +40,22 @@ typedef struct {
 static Color32 image[HEIGHT][WIDTH];
 static Point seeds[SEED_COUNT];
 
-// static Color32 palette_peach[] = {
-//     GRUVBOX_BRIGHT_RED,
-//     GRUVBOX_BRIGHT_GREEN,
-//     GRUVBOX_BRIGHT_YELLOW,
-//     GRUVBOX_BRIGHT_BLUE,
-//     GRUVBOX_BRIGHT_PURPLE,
-//     GRUVBOX_BRIGHT_AQUA,
-//     GRUVBOX_BRIGHT_ORANGE,
-// };
-// #define PALETTE_COUNT_PEACH (sizeof(palette_peach)/sizeof(palette_peach[0]))
-// static Color32 palette_boring[] = {
-//     COLOR_RED,
-//     COLOR_GREEN,
-//     COLOR_BLUE,
-// };
-// #define PALETTE_COUNT_BORING (sizeof(palette_boring)/sizeof(palette_boring[0]))
+static Color32 palette_peach[] = {
+    GRUVBOX_BRIGHT_RED,
+    GRUVBOX_BRIGHT_GREEN,
+    GRUVBOX_BRIGHT_YELLOW,
+    GRUVBOX_BRIGHT_BLUE,
+    GRUVBOX_BRIGHT_PURPLE,
+    GRUVBOX_BRIGHT_AQUA,
+    GRUVBOX_BRIGHT_ORANGE,
+};
+#define PALETTE_COUNT_PEACH (sizeof(palette_peach)/sizeof(palette_peach[0]))
+static Color32 palette_boring[] = {
+    COLOR_RED,
+    COLOR_GREEN,
+    COLOR_BLUE,
+};
+#define PALETTE_COUNT_BORING (sizeof(palette_boring)/sizeof(palette_boring[0]))
 static Color32 palette_grayscale[] = {
     COLOR_BLACK,
     COLOR_WHITE,
@@ -168,8 +168,8 @@ int main() {
     generate_random_seeds();
     fill_image(BACKGROUND_COLOR);
     // render_voronoi(palette_boring, PALETTE_COUNT_BORING);
-    // render_voronoi(palette_peach, PALETTE_COUNT_PEACH);
-    render_voronoi(palette_grayscale, PALETTE_COUNT_GRAYSCALE);
+    render_voronoi(palette_peach, PALETTE_COUNT_PEACH);
+    // render_voronoi(palette_grayscale, PALETTE_COUNT_GRAYSCALE);
     // render_seeds(COLOR_BLACK);
     save_image_as_ppm(OUTPUT_FILE_PATH);
 

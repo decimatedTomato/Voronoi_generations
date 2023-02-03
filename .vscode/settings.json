@@ -8,7 +8,8 @@
         "stdint.h": "c",
         "math.h": "c",
         "corecrt_math_defines.h": "c",
-        "corecrt_math.h": "c"
+        "corecrt_math.h": "c",
+        "time.h": "c"
     },
     "ppm-pgm-viewer-for-vscode.imagepreview.hidePanel": true,
     "ppm-pgm-viewer-for-vscode.imagepreview.uiPosition": "right",
