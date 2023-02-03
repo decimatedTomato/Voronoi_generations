@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 #include <errno.h>
+#include <string.h>
 #include <time.h>
+#include <assert.h>
 
-#include <math.h>
-
-#define WIDTH 800 * 4
-#define HEIGHT 400 * 4
-#define SEED_COUNT 3
+#define WIDTH 800
+#define HEIGHT 400
+#define SEED_COUNT 7
 #define SEED_RADIUS 5
 
 #define OUTPUT_FILE_PATH "output/output4.ppm"
@@ -40,22 +39,22 @@ typedef struct {
 static Color32 image[HEIGHT][WIDTH];
 static Point seeds[SEED_COUNT];
 
-static Color32 palette_peach[] = {
-    GRUVBOX_BRIGHT_RED,
-    GRUVBOX_BRIGHT_GREEN,
-    GRUVBOX_BRIGHT_YELLOW,
-    GRUVBOX_BRIGHT_BLUE,
-    GRUVBOX_BRIGHT_PURPLE,
-    GRUVBOX_BRIGHT_AQUA,
-    GRUVBOX_BRIGHT_ORANGE,
-};
-#define PALETTE_COUNT_PEACH (sizeof(palette_peach)/sizeof(palette_peach[0]))
-// static Color32 palette_boring[] = {
-//     COLOR_RED,
-//     COLOR_GREEN,
-//     COLOR_BLUE,
+// static Color32 palette_peach[] = {
+//     GRUVBOX_BRIGHT_RED,
+//     GRUVBOX_BRIGHT_GREEN,
+//     GRUVBOX_BRIGHT_YELLOW,
+//     GRUVBOX_BRIGHT_BLUE,
+//     GRUVBOX_BRIGHT_PURPLE,
+//     GRUVBOX_BRIGHT_AQUA,
+//     GRUVBOX_BRIGHT_ORANGE,
 // };
-// #define PALETTE_COUNT_BORING (sizeof(palette_boring)/sizeof(palette_boring[0]))
+// #define PALETTE_COUNT_PEACH (sizeof(palette_peach)/sizeof(palette_peach[0]))
+static Color32 palette_boring[] = {
+    COLOR_RED,
+    COLOR_GREEN,
+    COLOR_BLUE,
+};
+#define PALETTE_COUNT_BORING (sizeof(palette_boring)/sizeof(palette_boring[0]))
 // static Color32 palette_grayscale[] = {
 //     COLOR_BLACK,
 //     COLOR_WHITE,
@@ -92,18 +91,7 @@ void save_image_as_ppm(const char* file_path) {
     fclose(f);
 }
 
-void generate_random_seeds() {
-    for (size_t i = 0; i < SEED_COUNT; i++) {
-        seeds[i].x = rand() % WIDTH;
-        seeds[i].y = rand() % HEIGHT;
-    }
-}
-
-int sqrt_dist(int x1, int x2, int y1, int y2) {
-    int dx = x1 - x2;
-    int dy = y1 - y2;
-    return dx*dx + dy*dy;
-}
+int sqrt_dist(int x1, int x2, int y1, int y2);
 
 void fill_circle(int cx, int cy, int r, Color32 color) {
     int x0 = cx - r;
@@ -121,6 +109,20 @@ void fill_circle(int cx, int cy, int r, Color32 color) {
     }
 }
 
+void generate_random_seeds() {
+    for (size_t i = 0; i < SEED_COUNT; i++) {
+        seeds[i].x = rand() % WIDTH;
+        seeds[i].y = rand() % HEIGHT;
+    }
+}
+
+int sqrt_dist(int x1, int x2, int y1, int y2) {
+    int dx = x1 - x2;
+    int dy = y1 - y2;
+    int result = dx*dx + dy*dy;
+    return dx*dx + dy*dy;
+}
+
 void render_seeds(Color32 seed_color) {
     for(size_t i = 0; i < SEED_COUNT; i++) {
         fill_circle(seeds[i].x, seeds[i].y, SEED_RADIUS, seed_color);
@@ -128,50 +130,49 @@ void render_seeds(Color32 seed_color) {
 }
 
 typedef struct Neighbor {
-    int pixel_distance;
     int seed_index;
+    int pixel_distance;
 } Neighbor;
 
-// This does not quite work the way I wanted, it frequently overflows
-Color32 average_weighted_color(Neighbor* seed_infos, size_t color_count, Color32* palette, size_t palette_length) {
+static Neighbor seed_info[SEED_COUNT];
+
+Color32 average_weighted_color(Color32* palette, size_t palette_length) {
     double r = 0, g = 0, b = 0;
     double total_distance = 0;
-    for(size_t c = 0; c < color_count; c++) {
-        total_distance += seed_infos[c].pixel_distance * seed_infos[c].pixel_distance;
+    for(size_t c = 0; c < SEED_COUNT; c++) {
+        double squared = (double)seed_info[c].pixel_distance * (double)seed_info[c].pixel_distance;
+        total_distance += squared;
     }
-    for(size_t c = 0; c < color_count; c++) {
-        r += ((palette[seed_infos[c].seed_index % palette_length] & 0x0000FF) >> 0)  * (seed_infos[c].pixel_distance * seed_infos[c].pixel_distance / total_distance);
-        g += ((palette[seed_infos[c].seed_index % palette_length] & 0x00FF00) >> 8) * (seed_infos[c].pixel_distance * seed_infos[c].pixel_distance / total_distance);
-        b += ((palette[seed_infos[c].seed_index % palette_length] & 0xFF0000) >> 16) * (seed_infos[c].pixel_distance * seed_infos[c].pixel_distance / total_distance);
+    for(size_t c = 0; c < SEED_COUNT; c++) {
+        r += (((palette[seed_info[c].seed_index % palette_length] & 0x0000FF) >> 0) * (seed_info[c].pixel_distance * seed_info[c].pixel_distance) / total_distance);
+        g += (((palette[seed_info[c].seed_index % palette_length] & 0x00FF00) >> 8) * (seed_info[c].pixel_distance * seed_info[c].pixel_distance) / total_distance);
+        b += (((palette[seed_info[c].seed_index % palette_length] & 0xFF0000) >> 16) * (seed_info[c].pixel_distance * seed_info[c].pixel_distance) / total_distance);
     }
-    unsigned int R = (r > 255) ? 255 : (unsigned int) r;
-    unsigned int G = (g > 255) ? 255 : (unsigned int) g;
-    unsigned int B = (b > 255) ? 255 : (unsigned int) b;
-    return (B << 16) + (G << 8) + (R << 0);
+    return ((unsigned int) r << 16) + ((unsigned int) g << 8) + ((unsigned int) b << 0);
 }
 
 void render_voronoi(Color32* palette, size_t palette_length) {
-    Neighbor seed_info[SEED_COUNT];
-
     for(int y = 0; y < HEIGHT; y++) {
         for(int x = 0; x < WIDTH; x++) {
             for(size_t i = 0; i < SEED_COUNT; i++) {
-                Neighbor n = { .pixel_distance=sqrt_dist(seeds[i].x, x, seeds[i].y, y), .seed_index=i};
-                seed_info[i] = n;
+                seed_info[i].pixel_distance = sqrt_dist(seeds[i].x, x, seeds[i].y, y);
+                seed_info[i].seed_index = i;
             }
-            image[y][x] = average_weighted_color(seed_info, SEED_COUNT, palette, palette_length);
+            image[y][x] = average_weighted_color(palette, palette_length);
         }
     }
 }
 
 int main() {
-    srand(time(0));
+    long long int time_seed = time(0);
+    srand(time_seed);
     generate_random_seeds();
     fill_image(BACKGROUND_COLOR);
-    // render_voronoi(palette_boring, PALETTE_COUNT_BORING);
-    render_voronoi(palette_peach, PALETTE_COUNT_PEACH);
+    render_voronoi(palette_boring, PALETTE_COUNT_BORING);
+    // render_voronoi(palette_peach, PALETTE_COUNT_PEACH);
     // render_voronoi(palette_grayscale, PALETTE_COUNT_GRAYSCALE);
     // render_seeds(COLOR_BLACK);
     save_image_as_ppm(OUTPUT_FILE_PATH);
+    printf("seed %lld", time_seed);
     return 0;
 }
